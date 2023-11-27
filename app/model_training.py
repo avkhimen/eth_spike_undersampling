@@ -31,7 +31,7 @@ nn_points = [17,19,21,23,25,27,39,31]
 offset = 90
 nn_point = 17
 
-offset = 20
+offset = 10
 nn_point = 17
 
 df = pd.read_csv('data/original_files/ETHXBT_60.csv', header=None,
@@ -85,7 +85,7 @@ names = [
     # "Gaussian Process",
     "Decision Tree",
     # "Random Forest",
-    "Neural Net",
+    # "Neural Net",
     # "AdaBoost",
     # "Naive Bayes",
     # "QDA",
@@ -96,7 +96,7 @@ classifiers = [
     # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42),
     DecisionTreeClassifier(max_depth=5, random_state=42),
     # RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, random_state=42),
-    MLPClassifier(alpha=1, max_iter=1000, random_state=42),
+    # MLPClassifier(alpha=1, max_iter=1000, random_state=42),
     # AdaBoostClassifier(random_state=42),
     # GaussianNB(),
     # QuadraticDiscriminantAnalysis(),
