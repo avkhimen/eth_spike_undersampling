@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  eth_spike_underesampling:
+    build: 
+      context: ./docker
+      dockerfile: Dockerfile
+    ports:
+      - '5011:5011'
+    volumes:
+      - ./app:/home/jovyan/app
+    command: tail -F anything
+    environment:
+      - ACCOUNT_SID
+      - API_KEY
+      - API_SECRET
+      - TWILIO_PHONE_NUMBER
