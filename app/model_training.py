@@ -31,7 +31,7 @@ nn_points = [17,19,21,23,25,27,39,31]
 offset = 90
 nn_point = 17
 
-offset = 3
+offset = 20
 nn_point = 17
 
 df = pd.read_csv('data/original_files/ETHXBT_60.csv', header=None,
@@ -70,117 +70,92 @@ def set_spike_status(row):
 
 df['spike'] = df.apply(set_spike_status, axis=1)
 
-# df = df[1:]
-
-# df['close_price_perc'] = df['close_price_perc'] * 100
-
-# threshold = 4 #originally 4
-
-# df['spike'] = (df['close_price_perc'] > threshold).fillna(False)
-
 df = df[['close_price','spike']]
 
-offset = offset
-
-print(df)
-
 close_prices_list = sliding_window_view(df['close_price'], offset).tolist()
-
-print(close_prices_list[:5])
 
 spike_list = sliding_window_view(df['spike'], 1).tolist()[offset-1:]
 spike_list = [elem[0] for elem in spike_list]
 
-print(spike_list[:5])
+X = close_prices_list
+y = spike_list
 
-# X = close_prices_list[:-1]
-# y_ = spike_list[1:]
+names = [
+    # "Nearest Neighbors",
+    # "Gaussian Process",
+    "Decision Tree",
+    # "Random Forest",
+    "Neural Net",
+    # "AdaBoost",
+    # "Naive Bayes",
+    # "QDA",
+]
 
-# y = []
-# for elem in y_:
-#     y.append(str(elem))
+classifiers = [
+    # KNeighborsClassifier(nn_point),
+    # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42),
+    DecisionTreeClassifier(max_depth=5, random_state=42),
+    # RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, random_state=42),
+    MLPClassifier(alpha=1, max_iter=1000, random_state=42),
+    # AdaBoostClassifier(random_state=42),
+    # GaussianNB(),
+    # QuadraticDiscriminantAnalysis(),
+]
 
-# #print(df.head(10))
-# #print(X[:5], len(X))
-# #print(y[:5], len(y))
+for name, clf in zip(names, classifiers):
 
-# oversample = SMOTE()
-# rus = RandomUnderSampler(random_state=42)
-# #X, y = oversample.fit_resample(X, y)
+    true_ratios = []
 
-# X = np.array(X)
+    for _ in range(20):
 
-# X_ = []
-# for arr in X:
-#     #X_.append(np.concatenate((arr, arr/min(arr), arr/max(arr), arr/arr[0], arr/arr[-1], [max(arr)], [min(arr)], [np.mean(arr)]), axis=0))
-#     X_.append(np.concatenate((arr, arr/min(arr), [min(arr)]), axis=0))
+        rus = RandomUnderSampler()
 
-# X = np.array(X_).tolist()
+        X = np.array(X)
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+        X_ = []
+        for arr in X:
+            #X_.append(np.concatenate((arr, arr/min(arr), arr/max(arr), arr/arr[0], arr/arr[-1], [max(arr)], [min(arr)], [np.mean(arr)]), axis=0))
+            X_.append(np.concatenate((arr, arr/min(arr), [min(arr)]), axis=0))
 
-# #X_train, y_train = oversample.fit_resample(X_train, y_train)
-# X_train, y_train = rus.fit_resample(X_train, y_train)
+        X = np.array(X_).tolist()
 
-# #clf = svm.SVC()
-# #clf = tree.DecisionTreeClassifier()
-# #clf = HistGradientBoostingClassifier()
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
 
-# names = [
-#     "Nearest Neighbors",
-#     # "Gaussian Process",
-#     # "Decision Tree",
-#     # "Random Forest",
-#     # "Neural Net",
-#     # "AdaBoost",
-#     # "Naive Bayes",
-#     # "QDA",
-# ]
+        X_train, y_train = rus.fit_resample(X_train, y_train)
 
-# classifiers = [
-#     KNeighborsClassifier(nn_point),
-#     # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42),
-#     # DecisionTreeClassifier(max_depth=5, random_state=42),
-#     # RandomForestClassifier(
-#     #     max_depth=5, n_estimators=10, max_features=1, random_state=42
-#     # ),
-#     # MLPClassifier(alpha=1, max_iter=1000, random_state=42),
-#     # AdaBoostClassifier(random_state=42),
-#     # GaussianNB(),
-#     # QuadraticDiscriminantAnalysis(),
-# ]
+        clf.fit(X_train, y_train)
 
-# for name, clf in zip(names, classifiers):
+        # with open('model.pickle', 'wb') as f:
+        #     pickle.dump(clf, f)
 
-#     clf.fit(X_train, y_train)
+        yhat = clf.predict(X_test)
 
-#     with open('model.pickle', 'wb') as f:
-#         pickle.dump(clf, f)
+        acc = accuracy_score(y_test, yhat)
+        #print(name, 'Accuracy: %.3f' % acc)
+        #print('Count of true in training set', y_train.count('True'))
+        #print('Count of true in test set', y_test.count('True'))
 
-#     yhat = clf.predict(X_test)
+        total_count = 0
+        count_wrong = 0
+        count_num_true = 0
+        count_true_neg = 0
+        for i in range(len(y_test)):
+            total_count += 1
+            if yhat[i] != y_test[i]:
+                count_wrong += 1
+            if y_test[i] == 'True':
+                count_num_true += 1
+                if yhat[i] != 'True':
+                    count_true_neg += 1
 
-#     acc = accuracy_score(y_test, yhat)
-#     #print(name, 'Accuracy: %.3f' % acc)
-#     #print('Count of true in training set', y_train.count('True'))
-#     #print('Count of true in test set', y_test.count('True'))
-
-#     total_count = 0
-#     count_wrong = 0
-#     count_num_true = 0
-#     count_true_neg = 0
-#     for i in range(len(y_test)):
-#         total_count += 1
-#         if yhat[i] != y_test[i]:
-#             count_wrong += 1
-#         if y_test[i] == 'True':
-#             count_num_true += 1
-#             if yhat[i] != 'True':
-#                 count_true_neg += 1
-
-#     #print('total_count', total_count)
-#     #print('count_wrong', count_wrong)
-#     #print('count_true_neg', count_true_neg)
-#     #print('Real accuracy', (total_count - count_wrong)/total_count)
-#     #print('Count num true ratio', (count_num_true - count_true_neg)/count_num_true)
-#     print(nn_point, offset, 'Count num true ratio', (count_num_true - count_true_neg)/count_num_true)
-#     #print('---------------------------------------')
+        #print('total_count', total_count)
+        #print('count_wrong', count_wrong)
+        #print('count_true_neg', count_true_neg)
+        #print('Real accuracy', (total_count - count_wrong)/total_count)
+        #print('Count num true ratio', (count_num_true - count_true_neg)/count_num_true)
+        #print(nn_point, offset, 'Count num true ratio', (count_num_true - count_true_neg)/count_num_true)
+        true_ratio = (count_num_true - count_true_neg)/count_num_true
+        true_ratios.append(true_ratio)
+        print(name, 'Count num true ratio', true_ratio)
+        #print('---------------------------------------')
+    print('------------Average true ratio stats', np.array(true_ratios).mean(), np.array(true_ratios).min(), np.array(true_ratios).max())
