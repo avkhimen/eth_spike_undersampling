@@ -31,7 +31,7 @@ nn_points = [17,19,21,23,25,27,39,31]
 offset = 90
 nn_point = 17
 
-offset = 10
+offset = 90
 nn_point = 17
 
 df = pd.read_csv('data/original_files/ETHXBT_60.csv', header=None,
@@ -70,12 +70,22 @@ def set_spike_status(row):
 
 df['spike'] = df.apply(set_spike_status, axis=1)
 
-df = df[['close_price','spike']]
+df = df[['open_price','close_price','spike']]
 
-close_prices_list = sliding_window_view(df['close_price'], offset).tolist()
+#print(df.head(10))
 
-spike_list = sliding_window_view(df['spike'], 1).tolist()[offset-1:]
+open_prices_list = sliding_window_view(df['open_price'], offset).tolist()[:-1]
+open_prices_list = np.array(open_prices_list)
+
+close_prices_list = sliding_window_view(df['close_price'], offset).tolist()[:-1]
+close_prices_list = np.array(close_prices_list)
+
+#print(close_prices_list[:5])
+
+spike_list = sliding_window_view(df['spike'], 1).tolist()[offset:]
 spike_list = [elem[0] for elem in spike_list]
+
+#print(spike_list[:5])
 
 X = close_prices_list
 y = spike_list
@@ -94,7 +104,7 @@ names = [
 classifiers = [
     # KNeighborsClassifier(nn_point),
     # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42),
-    DecisionTreeClassifier(max_depth=5, random_state=42),
+    DecisionTreeClassifier(max_depth=10, random_state=42),
     # RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, random_state=42),
     # MLPClassifier(alpha=1, max_iter=1000, random_state=42),
     # AdaBoostClassifier(random_state=42),
@@ -106,16 +116,17 @@ for name, clf in zip(names, classifiers):
 
     true_ratios = []
 
-    for _ in range(20):
+    for _ in range(10):
 
         rus = RandomUnderSampler()
 
         X = np.array(X)
 
         X_ = []
-        for arr in X:
+        for ii, arr in enumerate(X):
             #X_.append(np.concatenate((arr, arr/min(arr), arr/max(arr), arr/arr[0], arr/arr[-1], [max(arr)], [min(arr)], [np.mean(arr)]), axis=0))
-            X_.append(np.concatenate((arr, arr/min(arr), [min(arr)]), axis=0))
+            X_.append(np.concatenate((arr, arr/min(arr), [min(arr)], open_prices_list[ii], open_prices_list[ii]/min(open_prices_list[ii]), [min(open_prices_list[ii])]), axis=0))
+            #X_.append(arr)
 
         X = np.array(X_).tolist()
 
