@@ -31,7 +31,7 @@ nn_points = [17,19,21,23,25,27,39,31]
 offset = 90
 nn_point = 17
 
-offset = 90
+offset = 10
 nn_point = 17
 
 df = pd.read_csv('data/original_files/ETHXBT_60.csv', header=None,
@@ -58,7 +58,7 @@ df = df.dropna()
 
 df = df[['open_price', 'high_price', 'low_price', 'close_price']]
 
-threshold = 5
+threshold = 6
 
 def set_spike_status(row):
     cng = 100 * (row['close_price'] - row['open_price'])/row['close_price']
@@ -87,7 +87,6 @@ spike_list = [elem[0] for elem in spike_list]
 
 #print(spike_list[:5])
 
-X = close_prices_list
 y = spike_list
 
 names = [
@@ -104,7 +103,7 @@ names = [
 classifiers = [
     # KNeighborsClassifier(nn_point),
     # GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42),
-    DecisionTreeClassifier(max_depth=10, random_state=42),
+    DecisionTreeClassifier(),
     # RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, random_state=42),
     # MLPClassifier(alpha=1, max_iter=1000, random_state=42),
     # AdaBoostClassifier(random_state=42),
@@ -116,16 +115,14 @@ for name, clf in zip(names, classifiers):
 
     true_ratios = []
 
-    for _ in range(10):
+    for _ in range(20):
 
         rus = RandomUnderSampler()
 
-        X = np.array(X)
-
         X_ = []
-        for ii, arr in enumerate(X):
+        for ii in range(len(close_prices_list)):
             #X_.append(np.concatenate((arr, arr/min(arr), arr/max(arr), arr/arr[0], arr/arr[-1], [max(arr)], [min(arr)], [np.mean(arr)]), axis=0))
-            X_.append(np.concatenate((arr, arr/min(arr), [min(arr)], open_prices_list[ii], open_prices_list[ii]/min(open_prices_list[ii]), [min(open_prices_list[ii])]), axis=0))
+            X_.append(np.concatenate((close_prices_list[ii], close_prices_list[ii]/min(close_prices_list[ii]), [min(close_prices_list[ii])], open_prices_list[ii], open_prices_list[ii]/min(open_prices_list[ii]), [min(open_prices_list[ii])]), axis=0))
             #X_.append(arr)
 
         X = np.array(X_).tolist()
