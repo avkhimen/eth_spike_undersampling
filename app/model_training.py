@@ -133,6 +133,9 @@ for name, clf in zip(names, classifiers):
 
         clf.fit(X_train, y_train)
 
+        with open('model.pickle', 'wb') as f:
+            pickle.dump(clf, f)
+
         # with open('model.pickle', 'wb') as f:
         #     pickle.dump(clf, f)
 

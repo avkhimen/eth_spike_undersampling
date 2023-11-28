@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     while True:
 
-        time.sleep(20)
+        time.sleep(45)
 
         current_time = datetime.now()
         logging.info(f'Processed {current_time}')
@@ -31,33 +31,38 @@ if __name__ == '__main__':
             ethusd_candles = requests.get(ethusd_url).json()['candles']
 
             ethusd_close_prices = []
+            ethusd_open_prices = []
             timestamps = []
             for item in ethusd_candles:
                 timestamps.append(item['time'])
                 ethusd_close_prices.append(float(item['close']))
+                ethusd_open_prices.append(float(item['open']))
 
             btcusd_url = f'https://futures.kraken.com/api/charts/v1/spot/PI_XBTUSD/4h?from={start}&to={end}'
 
             btcusd_candles = requests.get(btcusd_url).json()['candles']
 
             btcusd_close_prices = []
+            btcusd_open_prices = []
             timestamps = []
             for item in btcusd_candles:
                 timestamps.append(item['time'])
                 btcusd_close_prices.append(float(item['close']))
+                btcusd_open_prices.append(float(item['open']))
 
             close_prices = np.divide(np.array(ethusd_close_prices), np.array(btcusd_close_prices)).tolist()
+            open_prices = np.divide(np.array(ethusd_open_prices), np.array(btcusd_open_prices)).tolist()
 
             with open('model.pickle', 'rb') as f:
                 model = pickle.load(f)
 
             close_prices = np.array(close_prices)
+            open_prices = np.array(open_prices)
 
-            input_features = np.concatenate((close_prices[-90:], close_prices[-90:]/min(close_prices[-90:]), [min(close_prices[-90:])]), axis=0)
+            input_features = np.concatenate((close_prices[-10:], close_prices[-10:]/min(close_prices[-10:]), [min(close_prices[-10:])], 
+                                             open_prices[-10:], open_prices[-10:]/min(open_prices[-10:]), [min(open_prices[-10:])]), axis=0)
 
             pred = model.predict([input_features])[0]
-
-            print('Prediction is', pred)
 
             if pred == 'True':
 
@@ -67,11 +72,7 @@ if __name__ == '__main__':
                 client = Client(api_key, api_secret, account_sid)
 
                 message = client.messages.create(
-                    from_=os.environ['TWILIO_PHONE_NUMBER'],
-                    body='Eth should spike against BTC',
-                    to='+17809321716'
+                    from_= os.environ['TWILIO_PHONE_NUMBER'],
+                    body = 'ETH should spike against BTC',
+                    to = os.environ['RECEPIENT_PHONE_NUMBER']
                 )
-
-                # ts = int('1284101485')
-
-                # print(datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S'))
