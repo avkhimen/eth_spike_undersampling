@@ -47,7 +47,7 @@ df = df.drop(['unix_timestamp', 'other_1', 'other_2'], axis=1)
 
 df = df[['timestamp','open_price','high_price','low_price','close_price']]
 
-df = df.resample('4H', on='timestamp').agg({
+df = df.resample('8H', on='timestamp').agg({
     'open_price': 'first',
     'high_price': 'max',
     'low_price': 'min',

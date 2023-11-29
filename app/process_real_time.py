@@ -73,6 +73,6 @@ if __name__ == '__main__':
 
                 message = client.messages.create(
                     from_= os.environ['TWILIO_PHONE_NUMBER'],
-                    body = 'ETH should spike against BTC',
+                    body = 'ETH should spike against BTC from open-close model',
                     to = os.environ['RECEPIENT_PHONE_NUMBER']
                 )
